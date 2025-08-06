@@ -38,6 +38,8 @@ member3={
 }
 
 jackson_family.add_member(member1)
+jackson_family.add_member(member2)
+jackson_family.add_member(member3)
 
 # Handle/serialize errors like a JSON object
 @app.errorhandler(APIException)
@@ -52,12 +54,43 @@ def sitemap():
 
 
 @app.route('/members', methods=['GET'])
-def handle_hello():
+def get_members():
     # This is how you can use the Family datastructure by calling its methods
     members = jackson_family.get_all_members()
-    response_body = {"hello": "world",
-                     "family": members}
+    response_body = {"family": members}
     return jsonify(response_body), 200
+
+@app.route('/member/<int:id>', methods=['GET'])
+def get_member(id):
+    member = jackson_family.get_member(id)
+    if member:
+        return jsonify(member), 200
+    else:
+        return jsonify({"error": "Member not found"}), 404
+    
+
+@app.route('/member', methods=['POST'])
+def add_member():
+    member = request.json
+
+    if not member:
+        return jsonify({"error": "Request body is required"}), 400
+
+    if 'first_name' not in member or 'age' not in member or 'lucky_numbers' not in member:
+        return jsonify({"error": "Some key fields are missing"}), 400
+
+    jackson_family.add_member(member)
+    return jsonify({"message": "Member added"}), 200
+
+@app.route('/member/<int:id>', methods=['DELETE'])
+def delete_member(id):
+    member=jackson_family.get_member(id)
+
+    if member:
+        jackson_family.delete_member(id)
+        return jsonify({"message": f"Member {member['first_name']} deleted"}), 200
+    else:
+        return jsonify({"error": f"Member {id} not found"}), 404
 
 
 
